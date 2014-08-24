@@ -1,0 +1,124 @@
+
+import webapp2
+import cgi
+
+
+form="""<form method="post">
+    <h1 style='color:blue'>Please Enter your birthdate.</h1>
+    <br>
+    <label style="color:green"><b>Day</b>
+        <input type="text" name="day" value={day}>
+    </label>
+       <label style="color:green"><b>Month</b>
+        <input type="text" name="month" value={month}>
+    </label>
+    <label style="color:green"><b>Year</b>
+        <input type="text" name="year" value={year}>
+    </label>
+    <div style="color:red"><h2>{error}</h2></div>
+    <br><br>
+    <input type="submit">
+     <h3 style="color:red">Best Regards, The NSA </h3>
+ </form>
+"""
+class MainHandler(webapp2.RequestHandler):
+    def write_form(self,
+                   input_error="",
+                   input_day="",
+                   input_month="",
+                   input_year=""):
+
+
+        self.response.out.write(form.format(error=escape_html(input_error),
+                                            day=escape_html(input_day),
+                                            month=escape_html(input_month),
+                                            year=escape_html(input_year)))
+
+    def get(self):
+        #self.response.headers['Content-Type']='text/html'
+        self.write_form()
+
+    def post(self):
+        user_month = self.request.get("month")
+        user_day = self.request.get("day")
+        user_year = self.request.get("year")
+
+        month=valid_month(user_month)
+        day=valid_day(user_day)
+        year=valid_year(user_year)
+
+
+        if not (day and month and year):
+            self.write_form('Please, review your data entry',
+                            user_day,
+                            user_month,
+                            user_year)
+        else:
+            self.redirect("/thanks")
+
+class ThanksHandler(webapp2.RequestHandler):
+    '''this just uses the redirect concept as best practice after a user successfully/
+    does something'''
+    def get(self):
+        self.response.out.write("<h1 style='color:red'>Thank You!</h1>")
+
+
+
+# class TestHandler(webapp2.RequestHandler):
+#     def get(self):
+#         q=self.request.get("q")
+#         self.response.out.write(q)
+
+
+def escape_html(s):
+    "used to escape inputs that will effect  the form html like <br> for example "
+
+    return cgi.escape(s,quote=True) #the True is to escape quotes also
+
+
+def valid_month(month):
+    months = ['January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December']
+    new_months=[]
+    new_month=month.lower()
+
+    for i in months:
+        new_months.append(i.lower())
+    if new_month in new_months:
+        return month.capitalize()
+    else:
+        return None
+
+def valid_day(day):
+    days=list(range(1,32))
+    if day.isdigit():
+        if int(day) in days:
+            return int(day)
+    else:
+        return None
+
+def valid_year(year):
+    years=list(range(1900,2021))
+    if year.isdigit():
+        if int(year) in years:
+            return int(year)
+    else:
+        return None
+
+
+
+
+app = webapp2.WSGIApplication([
+    ('/', MainHandler),
+    ('/thanks',ThanksHandler)
+], debug=True)
